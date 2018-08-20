@@ -7,6 +7,79 @@ import (
 	"log"
 	"image/draw"
 	"github.com/fogleman/gg"
+	"math/rand"
+)
+
+const (
+	HEIGHT      = 500
+	WIDTH       = HEIGHT * 3
+	RECT_WIDTH  = 30
+	RECT_HEIGHT = 30
+)
+
+type dotsManager struct {
+	dots map[int]map[int]bool
+	count int
+}
+
+type point struct {
+	x, y int
+}
+
+func (self *dotsManager) addDot(x int, y int) {
+	if _, ok := self.dots[x]; !ok {
+		self.dots[x] = make(map[int]bool)
+	}
+	if _, v := self.dots[x][y]; !v {
+		self.dots[x][y] = true
+		self.count++
+	}
+}
+
+func (self *dotsManager) removeDot(x int, y int) {
+	if _, ok := self.dots[x]; ok {
+		if self.dots[x][y] {
+			self.dots[x][y] = false
+			self.count--
+		}
+	}
+}
+
+func (self *dotsManager) checkDot(x int, y int) bool {
+	if _, ok := self.dots[x]; !ok {
+		return self.dots[x][y]
+	}
+	return false
+}
+
+func (self *dotsManager) getList() []point {
+	points := make([]point, self.count)
+	i := 0
+	for x, column := range self.dots {
+		for y, v := range column {
+			if v {
+				points[i] = point{x: x, y: y}
+				i++
+			}
+		}
+	}
+	return points
+}
+
+func (self *dotsManager) getRandomDot() point {
+	list := self.getList()
+	return list[rand.Intn(self.count)]
+}
+
+func createDots() *dotsManager {
+	var d = dotsManager{}
+	d.dots = make(map[int]map[int]bool)
+	d.count = 0
+	return &d
+}
+
+var (
+	d = createDots()
 )
 
 func drawImage(ctx *gg.Context, filename string, x int, y int, w int, h int) error {
@@ -46,16 +119,13 @@ func main() {
 	}
 
 
-	height := 500
-	width := height * 3
-
-	size := float64(height)
+	size := float64(HEIGHT)
 
 
 	// Initialize the context.
 	fg, bg := image.Black, image.White
 
-	img := image.NewRGBA(image.Rect(0, 0, width, height))
+	img := image.NewRGBA(image.Rect(0, 0, WIDTH, HEIGHT))
 	draw.Draw(img, img.Bounds(), bg, image.ZP, draw.Src)
 
 	c := freetype.NewContext()
@@ -78,36 +148,36 @@ func main() {
 		log.Printf("text %s was drawn\n", s)
 	}
 
-	ctx := gg.NewContextForImage(img)
-	//if err = drawImage(ctx, "./boobs.png", 5, 5); err != nil {
-	//	log.Panicln(err)
-	//	return
-	//}
-
-	rectW := 30
-	rectH := 30
+	cleanImg := image.NewRGBA(image.Rect(0, 0, WIDTH, HEIGHT))
+	cleanCtx := gg.NewContextForImage(cleanImg)
 
 	var blackCount int
-	for i := 0; i < width; i += rectW + 1 {
-		for j := 0; j < height; j += rectH + 1 {
+	for i := 0; i < WIDTH; i += RECT_WIDTH + 1 {
+		for j := 0; j < HEIGHT; j += RECT_HEIGHT + 1 {
 			blackCount = 0
-			for ri := i; ri < i + rectW; ri++ {
-				for rj := j; rj < j + rectH; rj++ {
+			for ri := i; ri < i + RECT_WIDTH; ri++ {
+				for rj := j; rj < j + RECT_HEIGHT; rj++ {
 					rgba := img.RGBAAt(ri, rj)
 					if rgba.R == 0 && rgba.G == 0 && rgba.B == 0 {
 						blackCount++
+						d.addDot(ri, rj)
 					}
 				}
 			}
-			if float64(blackCount) > float64(rectW * rectH) * 0.5 {
+			if float64(blackCount) > float64(RECT_WIDTH * RECT_HEIGHT) * 0.5 {
 				//ctx.SetRGB(0, 128, 0)
 				//ctx.DrawRectangle(float64(i), float64(j), float64(rectW), float64(rectH))
 				//ctx.Fill()
-				drawImage(ctx, "boobs.png", i, j, rectW, rectH)
+				//drawImage(ctx, "boobs.png", i, j, RECT_WIDTH, RECT_HEIGHT)
 			}
 		}
 	}
 
+	for i := 0; i < 1000; i++ {
+		p := d.getRandomDot()
+		drawImage(cleanCtx, "boobs.png", p.x, p.y, RECT_WIDTH, RECT_HEIGHT)
+	}
 
-	ctx.SavePNG("test.png")
+
+	cleanCtx.SavePNG("test.png")
 }
