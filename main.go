@@ -8,13 +8,15 @@ import (
 	"image/draw"
 	"github.com/fogleman/gg"
 	"math/rand"
+	"path/filepath"
 )
 
 const (
 	HEIGHT      = 500
-	WIDTH       = HEIGHT * 3
+	WIDTH       = HEIGHT * 4
 	RECT_WIDTH  = 30
 	RECT_HEIGHT = 30
+	IMG_FOLDER = "./img/"
 )
 
 type dotsManager struct {
@@ -149,6 +151,7 @@ func main() {
 	}
 
 	cleanImg := image.NewRGBA(image.Rect(0, 0, WIDTH, HEIGHT))
+	draw.Draw(cleanImg, cleanImg.Bounds(), bg, image.ZP, draw.Src)
 	cleanCtx := gg.NewContextForImage(cleanImg)
 
 	var blackCount int
@@ -173,9 +176,19 @@ func main() {
 		}
 	}
 
+	var images []string
+	if images, err = filepath.Glob(IMG_FOLDER + "*.png"); err != nil {
+		panic(err)
+	}
+	log.Printf("%v\n", images)
+	imgCount := len(images)
+
 	for i := 0; i < 1000; i++ {
 		p := d.getRandomDot()
-		drawImage(cleanCtx, "boobs.png", p.x, p.y, RECT_WIDTH, RECT_HEIGHT)
+		err = drawImage(cleanCtx, images[rand.Intn(imgCount)], p.x, p.y, RECT_WIDTH, RECT_HEIGHT)
+		if err != nil {
+			panic(err)
+		}
 	}
 
 
