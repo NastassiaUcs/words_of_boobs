@@ -15,9 +15,9 @@ import (
 const (
 	HEIGHT      = 700
 	WIDTH       = HEIGHT * 5
-	RECT_WIDTH  = 40
+	RECT_WIDTH  = 25
 	//RECT_HEIGHT = 30
-	IMG_FOLDER = "./img/"
+	IMG_FOLDER = "./img_it/"
 )
 
 type dotsManager struct {
@@ -138,7 +138,7 @@ func main() {
 
 
 	// Initialize the context.
-	fg, bg := image.Black, image.White
+	fg, bg := image.Black, image.White //image.NewUniform(color.Gray16{0xaaaa})
 
 	img := image.NewRGBA(image.Rect(0, 0, WIDTH, HEIGHT))
 	draw.Draw(img, img.Bounds(), bg, image.ZP, draw.Src)
@@ -153,7 +153,7 @@ func main() {
 
 	pt := freetype.Pt(2, int(size) - 34)
 
-	s := "лохи"
+	s := "geeks"
 
 	_, err = c.DrawString(s, pt)
 	if err != nil {
