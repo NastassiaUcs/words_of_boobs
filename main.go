@@ -9,13 +9,14 @@ import (
 	"github.com/fogleman/gg"
 	"math/rand"
 	"path/filepath"
+	"math"
 )
 
 const (
-	HEIGHT      = 500
-	WIDTH       = HEIGHT * 4
-	RECT_WIDTH  = 30
-	RECT_HEIGHT = 30
+	HEIGHT      = 700
+	WIDTH       = HEIGHT * 5
+	RECT_WIDTH  = 40
+	//RECT_HEIGHT = 30
 	IMG_FOLDER = "./img/"
 )
 
@@ -48,28 +49,33 @@ func (self *dotsManager) removeDot(x int, y int) {
 }
 
 func (self *dotsManager) checkDot(x int, y int) bool {
-	if _, ok := self.dots[x]; !ok {
+	if _, ok := self.dots[x]; ok {
 		return self.dots[x][y]
 	}
 	return false
 }
 
-func (self *dotsManager) getList() []point {
+func (self *dotsManager) getList(shuffle bool) []point {
 	points := make([]point, self.count)
-	i := 0
+	count := 0
 	for x, column := range self.dots {
 		for y, v := range column {
 			if v {
-				points[i] = point{x: x, y: y}
-				i++
+				points[count] = point{x: x, y: y}
+				count++
 			}
 		}
+	}
+	if shuffle {
+		rand.Shuffle(count, func(i, j int) {
+			points[i], points[j] = points[j], points[i]
+		})
 	}
 	return points
 }
 
 func (self *dotsManager) getRandomDot() point {
-	list := self.getList()
+	list := self.getList(false)
 	return list[rand.Intn(self.count)]
 }
 
@@ -80,32 +86,39 @@ func createDots() *dotsManager {
 	return &d
 }
 
-var (
-	d = createDots()
-)
-
-func drawImage(ctx *gg.Context, filename string, x int, y int, w int, h int) error {
-
+func prepareImage(filename string, width int) (img image.Image, err error) {
 	source, err := gg.LoadPNG(filename)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	size := source.Bounds().Size()
 
-	var scaleX, scaleY float64
+	var scale float64
 
-	scaleX = float64(w) / float64(size.X)
-	scaleY = float64(h) / float64(size.Y)
+	scale = float64(width) / float64(size.X)
 
-	ctx.Scale(scaleX, scaleY)
-	log.Printf("x=%d y=%d scaleX=%f scaleY=%f\n", x, y, scaleX, scaleY)
-	xx := int(float64(x) / scaleX)
-	yy := int(float64(y) / scaleY)
-	ctx.DrawImage(source, xx, yy)
-	ctx.Scale(1 / scaleX, 1 / scaleY)
+	height := int(math.Round(float64(size.Y) * scale))
 
-	return nil
+	ctx := gg.NewContext(width, height)
+	ctx.Scale(scale, scale)
+	ctx.DrawImage(source, 0, 0)
+
+	return ctx.Image(), err
+}
+
+func drawImage(ctx *gg.Context, img image.Image, x int, y int, filledDots *dotsManager) {
+	size := img.Bounds().Size()
+	imgWidth, imgHeight := size.X, size.Y
+	x -= imgWidth / 2
+	y -= imgHeight / 2
+	for i := x; i < x + imgWidth; i++ {
+		for j := y; j < y + imgHeight; j++ {
+			filledDots.addDot(i, j)
+		}
+	}
+	//log.Printf("x = %d, y = %d, width = %d, height = %d\n", x, y, imgWidth, imgHeight)
+	ctx.DrawImage(img, x, y)
 }
 
 func main() {
@@ -121,7 +134,7 @@ func main() {
 	}
 
 
-	size := float64(HEIGHT)
+	size := float64(HEIGHT * 0.75)
 
 
 	// Initialize the context.
@@ -140,7 +153,7 @@ func main() {
 
 	pt := freetype.Pt(2, int(size) - 34)
 
-	s := "ага"
+	s := "лохи"
 
 	_, err = c.DrawString(s, pt)
 	if err != nil {
@@ -154,43 +167,47 @@ func main() {
 	draw.Draw(cleanImg, cleanImg.Bounds(), bg, image.ZP, draw.Src)
 	cleanCtx := gg.NewContextForImage(cleanImg)
 
+	var (
+		allDots = createDots()
+		filledDots = createDots()
+	)
+
 	var blackCount int
-	for i := 0; i < WIDTH; i += RECT_WIDTH + 1 {
-		for j := 0; j < HEIGHT; j += RECT_HEIGHT + 1 {
+	for i := 0; i < WIDTH; i ++ {
+		for j := 0; j < HEIGHT; j ++ {
 			blackCount = 0
-			for ri := i; ri < i + RECT_WIDTH; ri++ {
-				for rj := j; rj < j + RECT_HEIGHT; rj++ {
-					rgba := img.RGBAAt(ri, rj)
-					if rgba.R == 0 && rgba.G == 0 && rgba.B == 0 {
-						blackCount++
-						d.addDot(ri, rj)
-					}
-				}
-			}
-			if float64(blackCount) > float64(RECT_WIDTH * RECT_HEIGHT) * 0.5 {
-				//ctx.SetRGB(0, 128, 0)
-				//ctx.DrawRectangle(float64(i), float64(j), float64(rectW), float64(rectH))
-				//ctx.Fill()
-				//drawImage(ctx, "boobs.png", i, j, RECT_WIDTH, RECT_HEIGHT)
+			rgba := img.RGBAAt(i, j)
+			if rgba.R == 0 && rgba.G == 0 && rgba.B == 0 {
+				blackCount++
+				allDots.addDot(i, j)
 			}
 		}
 	}
 
-	var images []string
-	if images, err = filepath.Glob(IMG_FOLDER + "*.png"); err != nil {
+	var (
+		images []image.Image
+		filenames []string
+		points = allDots.getList(true)
+	)
+	if filenames, err = filepath.Glob(IMG_FOLDER + "*.png"); err != nil {
 		panic(err)
+	} else {
+		images = make([]image.Image, len(filenames))
+		for i := range filenames {
+			if images[i], err = prepareImage(filenames[i], RECT_WIDTH); err != nil {
+				panic(err)
+			}
+		}
 	}
-	log.Printf("%v\n", images)
 	imgCount := len(images)
 
-	for i := 0; i < 1000; i++ {
-		p := d.getRandomDot()
-		err = drawImage(cleanCtx, images[rand.Intn(imgCount)], p.x, p.y, RECT_WIDTH, RECT_HEIGHT)
-		if err != nil {
-			panic(err)
+	for i := 0; i < len(points); i++ {
+		p := points[i]
+		if filledDots.checkDot(p.x, p.y) {
+			continue
 		}
+		drawImage(cleanCtx, images[rand.Intn(imgCount)], p.x, p.y, filledDots)
 	}
-
 
 	cleanCtx.SavePNG("test.png")
 }
