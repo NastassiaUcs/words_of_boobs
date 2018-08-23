@@ -10,14 +10,17 @@ import (
 	"math/rand"
 	"path/filepath"
 	"math"
+	"flag"
 )
 
 const (
-	HEIGHT      = 700
+	HEIGHT      = 2000
 	WIDTH       = HEIGHT * 5
 	RECT_WIDTH  = 25
 	//RECT_HEIGHT = 30
-	IMG_FOLDER = "./img_it/"
+	IMG_FOLDER = "./img/"
+	EXAMPLE_IMG = "example.jpg"
+	TEXT = "aga"
 )
 
 type dotsManager struct {
@@ -122,6 +125,12 @@ func drawImage(ctx *gg.Context, img image.Image, x int, y int, filledDots *dotsM
 }
 
 func main() {
+	var width int
+	text := flag.String("text", "geeks", "a string")
+	flag.IntVar(&width, "width", WIDTH, "an int")
+	flag.Parse()
+	log.Println(*text)
+
 	fontBytes, err := ioutil.ReadFile("./fonts/NotoSans-Bold.ttf")
 	if err != nil {
 		log.Panicln(err)
@@ -153,17 +162,18 @@ func main() {
 
 	pt := freetype.Pt(2, int(size) - 34)
 
-	s := "geeks"
+
+	s := *text
 
 	_, err = c.DrawString(s, pt)
 	if err != nil {
 		log.Println(err)
 		return
 	} else {
-		log.Printf("text %s was drawn\n", s)
+		log.Printf("text %s is drawing, please wait\n", s)
 	}
 
-	cleanImg := image.NewRGBA(image.Rect(0, 0, WIDTH, HEIGHT))
+	cleanImg := image.NewRGBA(image.Rect(0, 0, width, HEIGHT))
 	draw.Draw(cleanImg, cleanImg.Bounds(), bg, image.ZP, draw.Src)
 	cleanCtx := gg.NewContextForImage(cleanImg)
 
@@ -172,12 +182,27 @@ func main() {
 		filledDots = createDots()
 	)
 
-	var blackCount int
-	for i := 0; i < WIDTH; i ++ {
+	var example image.Image
+	if EXAMPLE_IMG != "" {
+		if example, err = gg.LoadImage("example.jpg"); err != nil {
+			panic(err)
+		}
+	}
+
+	var (
+		blackCount int
+		r, g, b uint32
+	)
+	for i := 0; i < width; i ++ {
 		for j := 0; j < HEIGHT; j ++ {
 			blackCount = 0
-			rgba := img.RGBAAt(i, j)
-			if rgba.R == 0 && rgba.G == 0 && rgba.B == 0 {
+			if EXAMPLE_IMG == "" {
+				rgba := img.RGBAAt(i, j)
+				r, g, b = uint32(rgba.R), uint32(rgba.G), uint32(rgba.B)
+			} else {
+				r, g, b, _ = example.At(i, j).RGBA()
+			}
+			if r == 0 && g == 0 && b == 0 {
 				blackCount++
 				allDots.addDot(i, j)
 			}
@@ -209,5 +234,6 @@ func main() {
 		drawImage(cleanCtx, images[rand.Intn(imgCount)], p.x, p.y, filledDots)
 	}
 
-	cleanCtx.SavePNG("test.png")
+	cleanCtx.SavePNG("result.png")
+	log.Println("done, check file result.png")
 }
