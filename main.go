@@ -11,16 +11,17 @@ import (
 	"path/filepath"
 	"math"
 	"flag"
+	"regexp"
 )
 
 const (
 	HEIGHT      = 2000
 	WIDTH       = HEIGHT * 5
-	RECT_WIDTH  = 25
+	RECT_WIDTH  = 70
 	//RECT_HEIGHT = 30
 	IMG_FOLDER = "./img/"
-	EXAMPLE_IMG = "example.jpg"
-	TEXT = "aga"
+	TEXT = "geeks"
+	FONT_NAME = "NotoSans-Bold.ttf"
 )
 
 type dotsManager struct {
@@ -89,8 +90,17 @@ func createDots() *dotsManager {
 	return &d
 }
 
-func prepareImage(filename string, width int) (img image.Image, err error) {
-	source, err := gg.LoadPNG(filename)
+func isPng(filename string) bool {
+	re := regexp.MustCompile("\\.png$")
+	return re.MatchString(filename)
+}
+
+func prepareImage(filename string, width int) (source image.Image, err error) {
+	if isPng(filename) {
+		source, err = gg.LoadPNG(filename)
+	} else {
+		source, err = gg.LoadImage(filename)
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -125,11 +135,19 @@ func drawImage(ctx *gg.Context, img image.Image, x int, y int, filledDots *dotsM
 }
 
 func main() {
-	var width int
-	text := flag.String("text", "geeks", "a string")
+	var (
+		width int
+		imageWidth int
+		text string
+		exampleImage string
+		fontName string
+	)
+	flag.StringVar(&text, "text", TEXT, "a string")
 	flag.IntVar(&width, "width", WIDTH, "an int")
+	flag.IntVar(&imageWidth, "img_with", RECT_WIDTH, "an int")
+	flag.StringVar(&exampleImage, "example_image", "", "image path/filename or empty for text")
+	flag.StringVar(&fontName, "font_name", FONT_NAME, "filename in folder fonts")
 	flag.Parse()
-	log.Println(*text)
 
 	fontBytes, err := ioutil.ReadFile("./fonts/NotoSans-Bold.ttf")
 	if err != nil {
@@ -149,28 +167,36 @@ func main() {
 	// Initialize the context.
 	fg, bg := image.Black, image.White //image.NewUniform(color.Gray16{0xaaaa})
 
-	img := image.NewRGBA(image.Rect(0, 0, WIDTH, HEIGHT))
+	img := image.NewRGBA(image.Rect(0, 0, width, HEIGHT))
 	draw.Draw(img, img.Bounds(), bg, image.ZP, draw.Src)
 
-	c := freetype.NewContext()
-	c.SetFont(f)
-	c.SetFontSize(size)
-	c.SetClip(img.Bounds())
-	c.SetDst(img)
-	c.SetSrc(fg)
 
-
-	pt := freetype.Pt(2, int(size) - 34)
-
-
-	s := *text
-
-	_, err = c.DrawString(s, pt)
-	if err != nil {
-		log.Println(err)
-		return
+	var example image.Image
+	if exampleImage != "" {
+		if example, err = gg.LoadImage(exampleImage); err != nil {
+			panic(err)
+		} else {
+			log.Printf("using image '%s' for generating, please wait\n", exampleImage)
+		}
 	} else {
-		log.Printf("text %s is drawing, please wait\n", s)
+		c := freetype.NewContext()
+		c.SetFont(f)
+		c.SetFontSize(size)
+		fontBounds := img.Bounds()
+		fontBounds.Min.X += 50
+		c.SetClip(fontBounds)
+		c.SetDst(img)
+		c.SetSrc(fg)
+
+		pt := freetype.Pt(2, int(size)-34)
+
+		_, err = c.DrawString(text, pt)
+		if err != nil {
+			log.Println(err)
+			return
+		} else {
+			log.Printf("text %s is drawing, please wait\n", text)
+		}
 	}
 
 	cleanImg := image.NewRGBA(image.Rect(0, 0, width, HEIGHT))
@@ -182,13 +208,6 @@ func main() {
 		filledDots = createDots()
 	)
 
-	var example image.Image
-	if EXAMPLE_IMG != "" {
-		if example, err = gg.LoadImage("example.jpg"); err != nil {
-			panic(err)
-		}
-	}
-
 	var (
 		blackCount int
 		r, g, b uint32
@@ -196,7 +215,7 @@ func main() {
 	for i := 0; i < width; i ++ {
 		for j := 0; j < HEIGHT; j ++ {
 			blackCount = 0
-			if EXAMPLE_IMG == "" {
+			if exampleImage == "" {
 				rgba := img.RGBAAt(i, j)
 				r, g, b = uint32(rgba.R), uint32(rgba.G), uint32(rgba.B)
 			} else {
@@ -214,26 +233,31 @@ func main() {
 		filenames []string
 		points = allDots.getList(true)
 	)
-	if filenames, err = filepath.Glob(IMG_FOLDER + "*.png"); err != nil {
+	if filenames, err = filepath.Glob(IMG_FOLDER + "*"); err != nil {
 		panic(err)
 	} else {
+		re := regexp.MustCompile("\\.(png|jpg|jpeg)$")
 		images = make([]image.Image, len(filenames))
 		for i := range filenames {
-			if images[i], err = prepareImage(filenames[i], RECT_WIDTH); err != nil {
+			if !re.MatchString(filenames[i]) {
+				continue
+			}
+			if images[i], err = prepareImage(filenames[i], imageWidth); err != nil {
 				panic(err)
 			}
 		}
 	}
 	imgCount := len(images)
-
+	drawnCount := 0
 	for i := 0; i < len(points); i++ {
 		p := points[i]
 		if filledDots.checkDot(p.x, p.y) {
 			continue
 		}
 		drawImage(cleanCtx, images[rand.Intn(imgCount)], p.x, p.y, filledDots)
+		drawnCount++
 	}
 
 	cleanCtx.SavePNG("result.png")
-	log.Println("done, check file result.png")
+	log.Printf("%d images was drawn, check file result.png", drawnCount)
 }
