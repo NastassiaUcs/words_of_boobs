@@ -19,7 +19,7 @@ const (
 	WIDTH       = HEIGHT * 5
 	RECT_WIDTH  = 70
 	//RECT_HEIGHT = 30
-	IMG_FOLDER = "./img/"
+	IMG_FOLDER = "./img"
 	TEXT = "geeks"
 	FONT_NAME = "NotoSans-Bold.ttf"
 )
@@ -141,12 +141,14 @@ func main() {
 		text string
 		exampleImage string
 		fontName string
+		imagesFolder string
 	)
 	flag.StringVar(&text, "text", TEXT, "a string")
 	flag.IntVar(&width, "width", WIDTH, "an int")
 	flag.IntVar(&imageWidth, "image_width", RECT_WIDTH, "an int")
 	flag.StringVar(&exampleImage, "example", "", "image path/filename or empty for text")
 	flag.StringVar(&fontName, "font", FONT_NAME, "filename in folder fonts")
+	flag.StringVar(&imagesFolder, "images_folder", IMG_FOLDER, "path to folder with images")
 	flag.Parse()
 
 	fontBytes, err := ioutil.ReadFile("./fonts/" + fontName)
@@ -233,7 +235,7 @@ func main() {
 		filenames []string
 		points = allDots.getList(true)
 	)
-	if filenames, err = filepath.Glob(IMG_FOLDER + "*"); err != nil {
+	if filenames, err = filepath.Glob(imagesFolder + "/*"); err != nil {
 		panic(err)
 	} else {
 		re := regexp.MustCompile("\\.(png|jpg|jpeg)$")
