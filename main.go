@@ -144,12 +144,12 @@ func main() {
 	)
 	flag.StringVar(&text, "text", TEXT, "a string")
 	flag.IntVar(&width, "width", WIDTH, "an int")
-	flag.IntVar(&imageWidth, "img_with", RECT_WIDTH, "an int")
-	flag.StringVar(&exampleImage, "example_image", "", "image path/filename or empty for text")
-	flag.StringVar(&fontName, "font_name", FONT_NAME, "filename in folder fonts")
+	flag.IntVar(&imageWidth, "image_width", RECT_WIDTH, "an int")
+	flag.StringVar(&exampleImage, "example", "", "image path/filename or empty for text")
+	flag.StringVar(&fontName, "font", FONT_NAME, "filename in folder fonts")
 	flag.Parse()
 
-	fontBytes, err := ioutil.ReadFile("./fonts/NotoSans-Bold.ttf")
+	fontBytes, err := ioutil.ReadFile("./fonts/" + fontName)
 	if err != nil {
 		log.Panicln(err)
 		return
