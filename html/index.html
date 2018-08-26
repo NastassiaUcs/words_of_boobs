@@ -15,7 +15,8 @@
 </head>
 <body>
 <form id="form">
-    <input id="text" value="" placeholder="text for image" max="15">
+    <input id="text" value="" placeholder="text for image" max="15"><br>
+    width: <input id="width" value="3000" placeholder="width" type="number">
     <button type="submit">generate</button>
 </form>
 <div id="container">
@@ -23,17 +24,18 @@
 </div>
 <script type="text/javascript">
     var textElement = document.getElementById("text");
+    var widthElement = document.getElementById("width");
     var form = document.getElementById("form");
     var container = document.getElementById("container");
     form.addEventListener("submit", function(e) {
         console.log(textElement.value);
-        fetch("/api/generate?text=" + textElement.value).then(function (response) {
+        fetch("api/generate?text=" + textElement.value + "&width=" + widthElement.value).then(function (response) {
             response.text().then(function(filename) {
                 if (filename.indexOf("error") == 0) {
                     container.innerText = filename;
                     return;
                 }
-                var url = "/img/" + filename;
+                var url = "img/" + filename;
                 var a = document.createElement("a")
                 a.href = url;
                 var img = document.createElement("img");

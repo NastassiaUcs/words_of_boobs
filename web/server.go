@@ -6,8 +6,20 @@ import (
 	"./../generator"
 	"strconv"
 	"log"
+	"os"
 )
 
+func writeLog(value string) {
+	f, err := os.OpenFile("log.txt", os.O_APPEND|os.O_WRONLY, 0644)
+	if err != nil {
+		log.Println(err)
+	}
+	_, err = f.WriteString(value)
+	if err != nil {
+		log.Println(err)
+	}
+	f.Close()
+}
 
 
 func Start(port int) error {
@@ -54,6 +66,7 @@ func Start(port int) error {
 			return
 		}
 
+		writeLog(text)
 		log.Printf("generated %s for text '%s' with width=%d\n", filename, text, width	)
 		w.Write([]byte(filename))
 	})
