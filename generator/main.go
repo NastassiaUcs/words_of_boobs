@@ -13,6 +13,7 @@ import (
 	"image/draw"
 	"math/rand"
 	"errors"
+	"time"
 )
 
 const (
@@ -95,6 +96,12 @@ func drawImage(ctx *gg.Context, img image.Image, x int, y int, filledDots *dotsM
 	ctx.DrawImage(img, x, y)
 }
 
+func getFilename() string {
+	t := time.Now()
+	return t.Format("20060102150405") + ".png"
+}
+
+
 type generator struct {
 	imageSets map[string][]image.Image
 	fonts map[string]*truetype.Font
@@ -144,7 +151,7 @@ func (this *generator) loadImagesSets(imageWidth int) {
 
 
 
-func (this *generator) process(source image.Image, imgSet string) {
+func (this *generator) process(source image.Image, imgSet string) (filename string) {
 	var (
 		bg = image.White
 		img draw.Image
@@ -159,7 +166,6 @@ func (this *generator) process(source image.Image, imgSet string) {
 	draw.Draw(img, img.Bounds(), bg, image.ZP, draw.Src)
 	ctx = gg.NewContextForImage(img)
 
-	log.Println(sourceCtx.Width(), sourceCtx.Height())
 	for i := 0; i < sourceCtx.Width(); i ++ {
 		for j := 0; j < sourceCtx.Height(); j ++ {
 			r, g, b, a = source.At(i, j).RGBA()
@@ -168,7 +174,6 @@ func (this *generator) process(source image.Image, imgSet string) {
 			}
 		}
 	}
-	log.Println(allDots.count)
 
 
 	var (
@@ -188,14 +193,20 @@ func (this *generator) process(source image.Image, imgSet string) {
 		drawnCount++
 	}
 
-	ctx.SavePNG(RESULTS_FOLDER + "result.png")
-	log.Printf("%d images was drawn, check file result.png", drawnCount)
+	filename = getFilename()
+	ctx.SavePNG(RESULTS_FOLDER + filename)
+	log.Printf("%d images was drawn\n", drawnCount)
+	return
 }
 
 func GenerateImageForText(text, fontName, imgSet string, height, width int) (filename string, err error) {
 	f, ok := g.fonts[fontName]
 	if !ok {
 		return "", errors.New("no font " + fontName)
+	}
+
+	if width == 0 {
+		width = height * 5
 	}
 
 	var (
@@ -217,9 +228,7 @@ func GenerateImageForText(text, fontName, imgSet string, height, width int) (fil
 
 	_, err = c.DrawString(text, pt)
 
-	gg.NewContextForImage(img).SavePNG("test.png")
-
-	g.process(img, imgSet)
+	filename = g.process(img, imgSet)
 
 	return
 }

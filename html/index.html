@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Words Of Boobs</title>
+    <style>
+        #container {
+            width: 100%;
+        }
+
+        #container img {
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+<form id="form">
+    <input id="text" value="" placeholder="text for image" max="15">
+    <button type="submit">generate</button>
+</form>
+<div id="container">
+
+</div>
+<script type="text/javascript">
+    var textElement = document.getElementById("text");
+    var form = document.getElementById("form");
+    var container = document.getElementById("container");
+    form.addEventListener("submit", function(e) {
+        console.log(textElement.value);
+        fetch("/api/generate?text=" + textElement.value).then(function (response) {
+            response.text().then(function(filename) {
+                if (filename.indexOf("error") == 0) {
+                    container.innerText = filename;
+                    return;
+                }
+                var url = "/img/" + filename;
+                var a = document.createElement("a")
+                a.href = url;
+                var img = document.createElement("img");
+                img.src = url;
+                a.appendChild(img);
+                container.innerText = '';
+                container.appendChild(a);
+            })
+        }).catch(console.error);
+        e.preventDefault();
+        return false;
+    })
+</script>
+</body>
+</html>
