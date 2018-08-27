@@ -14,7 +14,7 @@ func writeLog(value string) {
 	if err != nil {
 		log.Println(err)
 	}
-	_, err = f.WriteString(value)
+	_, err = f.WriteString(value + "\n")
 	if err != nil {
 		log.Println(err)
 	}
