@@ -13,7 +13,6 @@ import (
 	"image/draw"
 	"math/rand"
 	"time"
-	"image/color"
 )
 
 const (
@@ -21,12 +20,13 @@ const (
 	IMAGES_FOLDER  = "./img/"
 	RESULTS_FOLDER = "./results/"
 	EXAMPLES_FOLDER = "./examples/"
-	FONT_POINTS = 750
+	FONT_POINTS = 1000
+	SMALL_FONT_POINTS = 100
 )
 
 var (
-	g generator
-	textContent = gg.NewContext(50, 50)
+	g           generator
+	textContext = gg.NewContext(50, 50)
 )
 
 func init() {
@@ -34,7 +34,15 @@ func init() {
 	g.imageSets = make(map[string][]image.Image)
 	g.fonts = make(map[string]*truetype.Font)
 
-	textContent.LoadFontFace(FONTS_FOLDER + "Symbola.ttf", FONT_POINTS)
+	textContext.LoadFontFace(FONTS_FOLDER + "Symbola.ttf", SMALL_FONT_POINTS)
+}
+
+func getTextSize(text string) (width float64, height float64) {
+	width, height = textContext.MeasureString(text)
+	scale := float64(FONT_POINTS) / float64(SMALL_FONT_POINTS)
+	width *= scale
+	height *= scale
+	return
 }
 
 
@@ -166,9 +174,6 @@ func (this *generator) process(source image.Image, imgSet string) (filename stri
 		r, g, b, a uint32
 	)
 
-	img = image.NewRGBA(source.Bounds())
-	draw.Draw(img, img.Bounds(), bg, image.ZP, draw.Src)
-	ctx = gg.NewContextForImage(img)
 
 	for i := 0; i < sourceCtx.Width(); i ++ {
 		for j := 0; j < sourceCtx.Height(); j ++ {
@@ -178,6 +183,11 @@ func (this *generator) process(source image.Image, imgSet string) (filename stri
 			}
 		}
 	}
+
+	padding := sourceCtx.Width() / 20
+	img = image.NewRGBA(image.Rect(0, 0, sourceCtx.Width() + padding * 2, sourceCtx.Height()))
+	draw.Draw(img, img.Bounds(), bg, image.ZP, draw.Src)
+	ctx = gg.NewContextForImage(img)
 
 
 	var (
@@ -190,10 +200,11 @@ func (this *generator) process(source image.Image, imgSet string) (filename stri
 	drawnCount := 0
 	for i := 0; i < len(points); i++ {
 		p := points[i]
-		if filledDots.checkDot(p.x, p.y) {
+		x, y := p.x + padding, p.y
+		if filledDots.checkDot(x, y) {
 			continue
 		}
-		drawImage(ctx, images[rand.Intn(imgCount)], p.x, p.y, filledDots)
+		drawImage(ctx, images[rand.Intn(imgCount)], x, y, filledDots)
 		drawnCount++
 	}
 
@@ -204,24 +215,24 @@ func (this *generator) process(source image.Image, imgSet string) (filename stri
 }
 
 func GenerateImageForText(text, fontName, imgSet string, height, width int) (filename string, err error) {
-	tw, th := textContent.MeasureString(text)
+	tw, th := getTextSize(text)
+	textWidth, textHeight := int(tw), int(th)
 
-	var (
-		padding = 50
-	)
+	img := image.NewRGBA(image.Rect(0, 0, textWidth, textHeight * 2))
 
-	textHeight := int(th)
-	ctx := gg.NewContext(int(tw) + padding*2, textHeight + textHeight / 40 * 16 + padding)
-	ctx.SetColor(color.White)
-	ctx.Clear()
-	ctx.SetColor(color.Black)
-	if err = ctx.LoadFontFace(FONTS_FOLDER + "Symbola.ttf", FONT_POINTS); err != nil {
-		return
-	}
+	f := g.fonts["Symbola.ttf"]
 
-	ctx.DrawString(text, float64(padding), th + float64(padding))
+	c := freetype.NewContext()
+	c.SetFont(f)
+	c.SetFontSize(FONT_POINTS )
+	c.SetClip(img.Bounds())
+	c.SetDst(img)
+	c.SetSrc(image.Black)
 
-	filename = g.process(ctx.Image(), imgSet)
+	pt := freetype.Pt(0, FONT_POINTS)
+
+	_, err = c.DrawString(text, pt)
+	filename = g.process(img, imgSet)
 
 	return
 }
