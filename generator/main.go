@@ -14,7 +14,7 @@ import (
 	"math/rand"
 	"time"
 	"image/color"
-	"github.com/juju/errors"
+	"errors"
 )
 
 const (
