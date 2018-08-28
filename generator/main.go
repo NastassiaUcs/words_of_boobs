@@ -26,15 +26,12 @@ const (
 
 var (
 	g generator
-	textContent = gg.NewContext(50, 50)
 )
 
 func init() {
 	g = generator{}
 	g.imageSets = make(map[string][]image.Image)
 	g.fonts = make(map[string]*truetype.Font)
-
-	textContent.LoadFontFace(FONTS_FOLDER + "Symbola.ttf", FONT_POINTS)
 }
 
 
@@ -204,7 +201,8 @@ func (this *generator) process(source image.Image, imgSet string) (filename stri
 }
 
 func GenerateImageForText(text, fontName, imgSet string, height, width int) (filename string, err error) {
-	tw, th := textContent.MeasureString(text)
+	textContext := gg.NewContext(15000, 3000)
+	tw, th := textContext.MeasureString(text)
 
 	var (
 		padding = 50
@@ -219,6 +217,19 @@ func GenerateImageForText(text, fontName, imgSet string, height, width int) (fil
 		return
 	}
 
+/*
+	c := freetype.NewContext()
+	c.SetFont(f)
+	c.SetFontSize(size)
+	fontBounds := img.Bounds()
+	fontBounds.Min.X += 50
+	c.SetClip(fontBounds)
+	c.SetDst(img)
+	c.SetSrc(fg)
+	pt := freetype.Pt(2, int(size)-34)
+
+	_, err = c.DrawString(text, pt)
+*/
 	ctx.DrawString(text, float64(padding), th + float64(padding))
 
 	filename = g.process(ctx.Image(), imgSet)
