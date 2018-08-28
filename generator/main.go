@@ -210,7 +210,8 @@ func GenerateImageForText(text, fontName, imgSet string, height, width int) (fil
 		padding = 50
 	)
 
-	ctx := gg.NewContext(int(tw) + padding*2, int(th) + padding * 12)
+	textHeight := int(th)
+	ctx := gg.NewContext(int(tw) + padding*2, textHeight + textHeight / 40 * 16 + padding)
 	ctx.SetColor(color.White)
 	ctx.Clear()
 	ctx.SetColor(color.Black)
