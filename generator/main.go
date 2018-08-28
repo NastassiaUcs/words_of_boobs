@@ -13,7 +13,7 @@ import (
 	"image/draw"
 	"math/rand"
 	"time"
-	"errors"
+	"image/color"
 )
 
 const (
@@ -21,17 +21,20 @@ const (
 	IMAGES_FOLDER  = "./img/"
 	RESULTS_FOLDER = "./results/"
 	EXAMPLES_FOLDER = "./examples/"
-	FONT_POINTS = 1500
+	FONT_POINTS = 750
 )
 
 var (
 	g generator
+	textContent = gg.NewContext(50, 50)
 )
 
 func init() {
 	g = generator{}
 	g.imageSets = make(map[string][]image.Image)
 	g.fonts = make(map[string]*truetype.Font)
+
+	textContent.LoadFontFace(FONTS_FOLDER + "Symbola.ttf", FONT_POINTS)
 }
 
 
@@ -201,49 +204,24 @@ func (this *generator) process(source image.Image, imgSet string) (filename stri
 }
 
 func GenerateImageForText(text, fontName, imgSet string, height, width int) (filename string, err error) {
-	f, ok := g.fonts[fontName]
-	if !ok {
-		return "", errors.New("no font " + fontName)
-	}
+	tw, th := textContent.MeasureString(text)
 
 	var (
-		//padding = 50
-		img = image.NewRGBA(image.Rect(0, 0, 15000, 2000))
-		fg = image.Black
+		padding = 50
 	)
 
-	size := float64(FONT_POINTS)
-
-	opts := truetype.Options{}
-	opts.Size = size
-	truetype.NewFace(f, &opts)
-
-	/*
 	textHeight := int(th)
 	ctx := gg.NewContext(int(tw) + padding*2, textHeight + textHeight / 40 * 16 + padding)
 	ctx.SetColor(color.White)
 	ctx.Clear()
 	ctx.SetColor(color.Black)
-	opts := truetype.Options{}
-	opts.Size = FONT_POINTS
-	ctx.SetFontFace(truetype.NewFace(f, &opts))
-	//if err = ctx.LoadFontFace(FONTS_FOLDER + "Symbola.ttf", FONT_POINTS); err != nil {
-	//	return
-	//}
-	*/
+	if err = ctx.LoadFontFace(FONTS_FOLDER + "Symbola.ttf", FONT_POINTS); err != nil {
+		return
+	}
 
-	c := freetype.NewContext()
-	c.SetFont(f)
-	c.SetFontSize(size)
-	c.SetClip(img.Bounds())
-	c.SetDst(img)
-	c.SetSrc(fg)
-	pt := freetype.Pt(2, int(size)-34)
+	ctx.DrawString(text, float64(padding), th + float64(padding))
 
-	_, err = c.DrawString(text, pt)
-	//ctx.DrawString(text, float64(padding), th + float64(padding))
-
-	//filename = g.process(img, imgSet)
+	filename = g.process(ctx.Image(), imgSet)
 
 	return
 }
