@@ -20,7 +20,7 @@ const (
 	IMAGES_FOLDER  = "./img/"
 	RESULTS_FOLDER = "./results/"
 	EXAMPLES_FOLDER = "./examples/"
-	FONT_POINTS = 1000
+	FONT_POINTS = 750
 	SMALL_FONT_POINTS = 100
 )
 
