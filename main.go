@@ -5,6 +5,7 @@ import (
 	"./web"
 	"flag"
 	"log"
+	"./downloader"
 )
 
 const (
@@ -27,6 +28,7 @@ func main() {
 		fontName     string
 		imagesFolder string
 		port int
+		download string
 	)
 	flag.StringVar(&text, "text", TEXT, "a string")
 	flag.IntVar(&width, "width", WIDTH, "an int")
@@ -35,12 +37,24 @@ func main() {
 	flag.StringVar(&fontName, "font", FONT_NAME, "filename in folder fonts")
 	flag.StringVar(&imagesFolder, "images_folder", IMG_FOLDER, "path to folder with images")
 	flag.IntVar(&port, "port", 0, "port for service")
+	flag.StringVar(&download, "download", "", "query for downloading")
 	flag.Parse()
 
 
 	var err error
-	generator.Reload(imageWidth)
+	//generator.Reload(imageWidth)
 
+	log.Println(download)
+	if download != "" {
+		downloader.Init()
+		err = downloader.Download(download)
+		if err != nil {
+			log.Panic(err)
+		}
+		generator.Reload(imageWidth)
+	} else {
+		generator.Reload(imageWidth)
+	}
 
 	if port > 0 {
 		if err = web.Start(port); err != nil {
