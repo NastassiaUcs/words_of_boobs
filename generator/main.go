@@ -214,6 +214,10 @@ func GenerateImageForText(text, fontName, imgSet string, height, width int) (fil
 
 	size := float64(FONT_POINTS)
 
+	opts := truetype.Options{}
+	opts.Size = size
+	truetype.NewFace(f, &opts)
+
 	/*
 	textHeight := int(th)
 	ctx := gg.NewContext(int(tw) + padding*2, textHeight + textHeight / 40 * 16 + padding)
@@ -239,7 +243,7 @@ func GenerateImageForText(text, fontName, imgSet string, height, width int) (fil
 	_, err = c.DrawString(text, pt)
 	//ctx.DrawString(text, float64(padding), th + float64(padding))
 
-	filename = g.process(img, imgSet)
+	//filename = g.process(img, imgSet)
 
 	return
 }
