@@ -10,7 +10,7 @@ import (
 const (
 	HEIGHT      = 2000
 	WIDTH       = HEIGHT * 5
-	RECT_WIDTH  = 70
+	RECT_WIDTH  = 30
 	//RECT_HEIGHT = 30
 	IMG_FOLDER = "boobs"
 	TEXT       = "geeks"

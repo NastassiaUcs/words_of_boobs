@@ -153,6 +153,7 @@ func (this *generator) loadImagesSets(imageWidth int) {
 				continue
 			}
 			if images[i], err = prepareImage(filenames[i], imageWidth); err != nil {
+				log.Println(filenames[i])
 				log.Panic(err)
 			}
 		}
