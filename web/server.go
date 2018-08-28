@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"log"
 	"os"
+	"unicode/utf8"
 )
 
 func writeLog(value string) {
@@ -54,7 +55,7 @@ func Start(port int) error {
 			return
 		}
 
-		if len(text) > 15 {
+		if utf8.RuneCountInString(text) > 15 {
 			w.Write([]byte("error: maximum text length = 15 symbols"))
 			return
 		}

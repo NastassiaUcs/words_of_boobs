@@ -12,8 +12,8 @@ import (
 	"path/filepath"
 	"image/draw"
 	"math/rand"
-	"errors"
 	"time"
+	"image/color"
 )
 
 const (
@@ -25,12 +25,15 @@ const (
 
 var (
 	g generator
+	textContent = gg.NewContext(50, 50)
 )
 
 func init() {
 	g = generator{}
 	g.imageSets = make(map[string][]image.Image)
 	g.fonts = make(map[string]*truetype.Font)
+
+	textContent.LoadFontFace(FONTS_FOLDER + "Symbola.ttf", 2000)
 }
 
 
@@ -200,35 +203,24 @@ func (this *generator) process(source image.Image, imgSet string) (filename stri
 }
 
 func GenerateImageForText(text, fontName, imgSet string, height, width int) (filename string, err error) {
-	f, ok := g.fonts[fontName]
-	if !ok {
-		return "", errors.New("no font " + fontName)
-	}
-
-	if width == 0 {
-		width = height * 5
-	}
+	tw, th := textContent.MeasureString(text)
+	log.Println(tw, th)
 
 	var (
-		size float64 = float64(height) * 0.75
-		img = image.NewRGBA(image.Rect(0, 0, width, height))
-		fg = image.Black
+		padding = 50
 	)
 
-	c := freetype.NewContext()
-	c.SetFont(f)
-	c.SetFontSize(size)
-	fontBounds := img.Bounds()
-	fontBounds.Min.X += 50
-	c.SetClip(fontBounds)
-	c.SetDst(img)
-	c.SetSrc(fg)
+	ctx := gg.NewContext(int(tw) + padding*2, int(th) + padding * 12)
+	ctx.SetColor(color.White)
+	ctx.Clear()
+	ctx.SetColor(color.Black)
+	if err = ctx.LoadFontFace(FONTS_FOLDER + "Symbola.ttf", 2000); err != nil {
+		return
+	}
 
-	pt := freetype.Pt(2, int(size)-34)
+	ctx.DrawString(text, float64(padding), th + float64(padding))
 
-	_, err = c.DrawString(text, pt)
-
-	filename = g.process(img, imgSet)
+	filename = g.process(ctx.Image(), imgSet)
 
 	return
 }
