@@ -14,6 +14,7 @@ import (
 	"math/rand"
 	"time"
 	"image/color"
+	"github.com/juju/errors"
 )
 
 const (
@@ -204,18 +205,28 @@ func GenerateImageForText(text, fontName, imgSet string, height, width int) (fil
 	textContext := gg.NewContext(15000, 3000)
 	tw, th := textContext.MeasureString(text)
 
+	f, ok := g.fonts[fontName]
+	if !ok {
+		return "", errors.New("no font " + fontName)
+	}
+
 	var (
 		padding = 50
 	)
+
+
 
 	textHeight := int(th)
 	ctx := gg.NewContext(int(tw) + padding*2, textHeight + textHeight / 40 * 16 + padding)
 	ctx.SetColor(color.White)
 	ctx.Clear()
 	ctx.SetColor(color.Black)
-	if err = ctx.LoadFontFace(FONTS_FOLDER + "Symbola.ttf", FONT_POINTS); err != nil {
-		return
-	}
+	opts := truetype.Options{}
+	opts.Size = FONT_POINTS
+	ctx.SetFontFace(truetype.NewFace(f, &opts))
+	//if err = ctx.LoadFontFace(FONTS_FOLDER + "Symbola.ttf", FONT_POINTS); err != nil {
+	//	return
+	//}
 
 /*
 	c := freetype.NewContext()
