@@ -21,6 +21,7 @@ const (
 	IMAGES_FOLDER  = "./img/"
 	RESULTS_FOLDER = "./results/"
 	EXAMPLES_FOLDER = "./examples/"
+	FONT_POINTS = 750
 )
 
 var (
@@ -33,7 +34,7 @@ func init() {
 	g.imageSets = make(map[string][]image.Image)
 	g.fonts = make(map[string]*truetype.Font)
 
-	textContent.LoadFontFace(FONTS_FOLDER + "Symbola.ttf", 2000)
+	textContent.LoadFontFace(FONTS_FOLDER + "Symbola.ttf", FONT_POINTS)
 }
 
 
@@ -204,7 +205,6 @@ func (this *generator) process(source image.Image, imgSet string) (filename stri
 
 func GenerateImageForText(text, fontName, imgSet string, height, width int) (filename string, err error) {
 	tw, th := textContent.MeasureString(text)
-	log.Println(tw, th)
 
 	var (
 		padding = 50
@@ -214,7 +214,7 @@ func GenerateImageForText(text, fontName, imgSet string, height, width int) (fil
 	ctx.SetColor(color.White)
 	ctx.Clear()
 	ctx.SetColor(color.Black)
-	if err = ctx.LoadFontFace(FONTS_FOLDER + "Symbola.ttf", 2000); err != nil {
+	if err = ctx.LoadFontFace(FONTS_FOLDER + "Symbola.ttf", FONT_POINTS); err != nil {
 		return
 	}
 
