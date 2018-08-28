@@ -21,7 +21,7 @@ const (
 	IMAGES_FOLDER  = "./img/"
 	RESULTS_FOLDER = "./results/"
 	EXAMPLES_FOLDER = "./examples/"
-	FONT_POINTS = 750
+	FONT_POINTS = 1500
 )
 
 var (
