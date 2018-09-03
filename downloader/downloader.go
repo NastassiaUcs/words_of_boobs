@@ -48,7 +48,7 @@ func Init() error {
 	return err
 }
 
-func SaveImage(i int, cat string, link string) error {
+func SaveImage(link, filename string) error {
 	log.Println(link)
 	resp, err := http.Get(link)
 	if err != nil {
@@ -56,7 +56,6 @@ func SaveImage(i int, cat string, link string) error {
 	}
 
 	defer resp.Body.Close()
-	filename := fmt.Sprintf("./img/%s/%d.jpg", cat, i)
 	file, err := os.Create(filename)
 	if err != nil {
 		return err
@@ -94,8 +93,14 @@ func Download(text string) error {
 
 	json.Unmarshal(bytes, &result)
 
+	dir := "./img/" + text
+	log.Println(dir)
+	if _, err := os.Stat(dir); os.IsNotExist(err) {
+		os.Mkdir(dir, os.ModePerm)
+	}
+
 	for i, item := range result.Items {
-		if err = SaveImage(i, text, item.Link); err != nil {
+		if err = SaveImage(item.Link, fmt.Sprintf("%s/%d.jpg", dir, i)); err != nil {
 			return err
 		}
 	}
