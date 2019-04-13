@@ -215,7 +215,7 @@ func (this *generator) process(source image.Image, imgSet string) (filename stri
 	return
 }
 
-func GenerateImageForText(text, fontName, imgSet string, height, width int) (filename string, err error) {
+func GenerateImageForText(text, imgSet string) (filename string, err error) {
 	tw, th := getTextSize(text)
 	textWidth, textHeight := int(tw), int(th)
 

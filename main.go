@@ -64,7 +64,7 @@ func main() {
 		if exampleImage != "" {
 			_, err = generator.GenerateImageForImage(exampleImage, IMG_FOLDER)
 		} else {
-			_, err = generator.GenerateImageForText(text, fontName, imagesFolder, HEIGHT, width)
+			_, err = generator.GenerateImageForText(text, imagesFolder)
 		}
 		if err != nil {
 			log.Panic(err)
